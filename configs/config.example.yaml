@@ -8,6 +8,13 @@ listen: "127.0.0.1:8317"
 # llm-guard passes through method, path, query string, and headers.
 upstream: "https://api.anthropic.com"
 
+# Optional outbound proxy for LLM API requests only. Empty = direct connection.
+# Supports http://, https://, socks5://, socks5h:// and URL-encoded credentials.
+# Examples: "http://user:password@127.0.0.1:3128", "socks5://127.0.0.1:1080".
+# SOCKS5 resolves destination names on the proxy. No direct fallback on failure.
+# HTTP_PROXY / HTTPS_PROXY / ALL_PROXY / NO_PROXY do not override this setting.
+upstream_proxy: ""
+
 # Redaction events (category + count, never raw values) are appended here.
 log_file: "~/.local/share/llmguard/redactions.log"
 

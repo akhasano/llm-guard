@@ -44,6 +44,9 @@ func TestDefault(t *testing.T) {
 	if cfg.Upstream != "" {
 		t.Errorf("Upstream = %q, want empty", cfg.Upstream)
 	}
+	if cfg.UpstreamProxy != "" {
+		t.Errorf("UpstreamProxy = %q, want empty", cfg.UpstreamProxy)
+	}
 
 	if cfg.UpstreamTimeouts.ConnectTimeoutMS != 10000 {
 		t.Errorf("UpstreamTimeouts.ConnectTimeoutMS = %d, want 10000", cfg.UpstreamTimeouts.ConnectTimeoutMS)
@@ -132,6 +135,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 
 	original := Default()
 	original.Upstream = "https://api.example.com"
+	original.UpstreamProxy = "socks5://user:password@127.0.0.1:1080"
 	original.Detectors.Regex.BuiltinCategories = []string{"email", "jwt"}
 	original.Detectors.Regex.CustomPatterns = []detectors.CustomPattern{
 		{Name: "internal_proj", Pattern: `PROJ-[0-9]{4,6}`},
