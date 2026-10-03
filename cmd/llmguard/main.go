@@ -36,7 +36,16 @@ const (
 	modelURL      = "https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_k_m.gguf"
 )
 
+var configPath string
+
 func main() {
+	if err := rootCmd().Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(1)
+	}
+}
+
+func rootCmd() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "llmguard",
 		Short: "Local secrets-redacting proxy for LLM API traffic",
@@ -46,12 +55,9 @@ func main() {
 			"in the response.",
 	}
 
+	root.PersistentFlags().StringVar(&configPath, "config", "", "config file path (default ~/.config/llmguard/config.yaml)")
 	root.AddCommand(installCmd(), envCmd(), initCmd(), startCmd(), stopCmd(), restartCmd(), statusCmd(), testCmd(), modelsCmd())
-
-	if err := root.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
-	}
+	return root
 }
 
 func installCmd() *cobra.Command {
@@ -82,10 +88,11 @@ func installCmd() *cobra.Command {
 				}
 			}
 			return install.Run(install.Options{
-				Agents:    parsed,
-				Upstream:  upstream,
-				SkipStart: skipStart,
-				NoProfile: noProfile,
+				ConfigPath: configPath,
+				Agents:     parsed,
+				Upstream:   upstream,
+				SkipStart:  skipStart,
+				NoProfile:  noProfile,
 			})
 		},
 	}
@@ -125,7 +132,7 @@ func initCmd() *cobra.Command {
 		Use:   "init",
 		Short: "Create the llm-guard config file",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			path, err := config.Path()
+			path, err := config.ResolvePath(configPath)
 			if err != nil {
 				return err
 			}
@@ -339,7 +346,7 @@ func modelsPullCmd() *cobra.Command {
 				return nil
 			}
 
-			cfgPath, err := config.Path()
+			cfgPath, err := config.ResolvePath(configPath)
 			if err != nil {
 				return err
 			}
@@ -454,7 +461,7 @@ func modelsStatusCmd() *cobra.Command {
 // runForeground loads the config, starts the HTTP proxy server, and blocks
 // until it receives SIGINT/SIGTERM.
 func runForeground() error {
-	cfgPath, err := config.Path()
+	cfgPath, err := config.ResolvePath(configPath)
 	if err != nil {
 		return err
 	}
@@ -538,7 +545,7 @@ func runForeground() error {
 // startDetached re-executes the current binary with `start` (foreground) as
 // a detached background process and records its pid.
 func startDetached() error {
-	cfgPath, err := config.Path()
+	cfgPath, err := config.ResolvePath(configPath)
 	if err != nil {
 		return err
 	}
@@ -581,7 +588,7 @@ func startDetached() error {
 	}
 	defer logFile.Close()
 
-	cmd := exec.Command(exe, "start")
+	cmd := exec.Command(exe, "start", "--config", cfgPath)
 	cmd.Env = append(os.Environ(), "LLM_GUARD_NO_BANNER=1")
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
@@ -620,12 +627,15 @@ func listenAddrFromConfig() string {
 }
 
 func loadOrDefaultConfig() (*config.Config, error) {
-	cfgPath, err := config.Path()
+	cfgPath, err := config.ResolvePath(configPath)
 	if err != nil {
 		return nil, err
 	}
 	if config.Exists(cfgPath) {
 		return config.Load(cfgPath)
+	}
+	if configPath != "" {
+		return nil, fmt.Errorf("no config found at %s — run `llmguard init --config %s` first", cfgPath, cfgPath)
 	}
 	return config.Default(), nil
 }
