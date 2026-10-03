@@ -23,12 +23,13 @@ const (
 
 // Options configures a non-interactive or scripted install run.
 type Options struct {
-	Agents    []Agent
-	Upstream  string // openai, anthropic, or full URL; empty = infer from agents
-	SkipStart bool
-	NoProfile bool
-	Reader    io.Reader
-	Writer    io.Writer
+	ConfigPath string // empty = default config path
+	Agents     []Agent
+	Upstream   string // openai, anthropic, or full URL; empty = infer from agents
+	SkipStart  bool
+	NoProfile  bool
+	Reader     io.Reader
+	Writer     io.Writer
 }
 
 // Run performs the install flow: configure upstream, start the proxy, write
@@ -39,7 +40,7 @@ func Run(opts Options) error {
 	}
 	out := opts.Writer
 
-	cfgPath, err := config.Path()
+	cfgPath, err := config.ResolvePath(opts.ConfigPath)
 	if err != nil {
 		return err
 	}
@@ -89,7 +90,7 @@ func Run(opts Options) error {
 	printAgentNotes(out, agents, cfg.Listen)
 
 	if !opts.SkipStart {
-		if err := runStartDetached(); err != nil {
+		if err := runStartDetached(cfgPath); err != nil {
 			return err
 		}
 	}
@@ -237,12 +238,12 @@ func containsAgent(agents []Agent, a Agent) bool {
 	return false
 }
 
-func runStartDetached() error {
+func runStartDetached(cfgPath string) error {
 	exe, err := os.Executable()
 	if err != nil {
 		return err
 	}
-	cmd := exec.Command(exe, "restart", "--detach")
+	cmd := exec.Command(exe, "restart", "--detach", "--config", cfgPath)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin

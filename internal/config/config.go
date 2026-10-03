@@ -147,6 +147,14 @@ func Default() *Config {
 	}
 }
 
+// ResolvePath returns an absolute explicit path, or the default config path.
+func ResolvePath(path string) (string, error) {
+	if path == "" {
+		return Path()
+	}
+	return filepath.Abs(path)
+}
+
 // Path returns the default config file path: ~/.config/llmguard/config.yaml.
 func Path() (string, error) {
 	home, err := os.UserHomeDir()

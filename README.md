@@ -113,6 +113,21 @@ custom URL), then writes `~/.config/llmguard/config.yaml` (see
 
 ### 2. Start the proxy
 
+All commands accept `--config /path/to/config.yaml` (before or after the
+subcommand). Without it, the default is `~/.config/llmguard/config.yaml`.
+Relative paths are resolved from the current directory and passed to background
+processes. Use the same flag for subsequent commands when using a custom config:
+
+```sh
+llmguard init --config ./config.yaml
+llmguard start --detach --config ./config.yaml
+llmguard restart --config ./config.yaml
+llmguard stop --config ./config.yaml
+```
+
+The flag changes only the config location; logs, PID files, and other state
+retain their usual locations. It does not enable multiple proxy instances.
+
 ```sh
 llmguard start            # foreground
 llmguard start --detach   # background; logs to ~/.local/share/llmguard/daemon.log
