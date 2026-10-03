@@ -16,6 +16,7 @@ import (
 type Config struct {
 	Listen           string                 `yaml:"listen"`
 	Upstream         string                 `yaml:"upstream"`
+	UpstreamProxy    string                 `yaml:"upstream_proxy"`
 	LogFile          string                 `yaml:"log_file"`
 	UpstreamTimeouts UpstreamTimeoutsConfig `yaml:"upstream_timeouts"`
 	Cache            CacheConfig            `yaml:"cache"`

@@ -183,6 +183,30 @@ log while your agent runs:
 tail -f ~/.local/share/llmguard/redactions.log
 ```
 
+## Optional: outbound HTTP / SOCKS5 proxy
+
+To route LLM API requests through another proxy, set `upstream_proxy` in
+`~/.config/llmguard/config.yaml` and run `llmguard restart`:
+
+```yaml
+upstream: "https://api.anthropic.com"
+upstream_proxy: "socks5://127.0.0.1:1080"
+# Or: "http://127.0.0.1:3128"
+# With authentication: "http://user:password@127.0.0.1:3128"
+```
+
+Supported schemes: `http`, `https`, `socks5`, `socks5h`. HTTP proxies use
+CONNECT for HTTPS APIs; SOCKS5 resolves destination hostnames on the proxy.
+Username/password can be included in the URL (percent-encode special
+characters). Keep this config private when it contains credentials.
+
+An omitted or empty `upstream_proxy` keeps direct connections. Environment
+proxy variables (`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`) are
+not used for LLM API forwarding. An unavailable configured proxy returns
+an error, never falls back to a direct connection. Redaction, response
+restoration, and SSE streaming remain unchanged. This option does not affect
+the local LLM detector or model downloads.
+
 ## Optional: local LLM fallback detector
 
 Regex catches structured secrets (keys, tokens, emails, SSNs, credit

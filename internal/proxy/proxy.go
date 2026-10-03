@@ -24,8 +24,11 @@ const (
 	defaultResponseHeaderTimeout = 120 * time.Second
 )
 
-// Options configures upstream HTTP client timeouts. Zero values use defaults.
+// Options configures the upstream HTTP client. Zero timeouts use defaults.
 type Options struct {
+	// UpstreamProxy is an HTTP(S) or SOCKS5 proxy URL. Empty means direct
+	// connections, independently of HTTP_PROXY / HTTPS_PROXY environment vars.
+	UpstreamProxy         string
 	ConnectTimeout        time.Duration
 	ResponseHeaderTimeout time.Duration
 }
@@ -63,10 +66,19 @@ func New(upstream string, redactor *redact.Redactor, logger *log.Logger, opts Op
 	}
 
 	opts = opts.withDefaults()
+	proxyURL, err := parseUpstreamProxy(opts.UpstreamProxy)
+	if err != nil {
+		return nil, err
+	}
 	transport := &http.Transport{
 		DialContext:           (&net.Dialer{Timeout: opts.ConnectTimeout}).DialContext,
 		TLSHandshakeTimeout:   opts.ConnectTimeout,
 		ResponseHeaderTimeout: opts.ResponseHeaderTimeout,
+	}
+	if proxyURL != nil {
+		// net/http supports HTTP CONNECT and SOCKS5 (including authentication
+		// and remote DNS resolution) without additional dependencies.
+		transport.Proxy = http.ProxyURL(proxyURL)
 	}
 
 	return &Proxy{
@@ -99,6 +111,10 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	outReq.Header = r.Header.Clone()
 	outReq.Header.Del("Connection")
+	// Proxy credentials belong to the configured outbound transport, not
+	// to the incoming client or the upstream LLM provider.
+	outReq.Header.Del("Proxy-Authorization")
+	outReq.Header.Del("Proxy-Connection")
 	// Let net/http negotiate and transparently decompress the response
 	// itself. If we forward the client's Accept-Encoding verbatim, Go's
 	// transport assumes *we* will handle decoding and leaves the body

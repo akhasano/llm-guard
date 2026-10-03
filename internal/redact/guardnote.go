@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// injectGuardNoteIntoData appends a note to the request's system prompt telling
-// the model that llm-guard intercepted and redacted sensitive items.
+// injectGuardNoteIntoData appends a note using the request's instruction format.
+// OpenAI Responses (including ChatGPT/Codex) accepts instructions, not system.
 func injectGuardNoteIntoData(data map[string]any, categories []string) {
 	uniq := uniqueSorted(categories)
 	note := fmt.Sprintf(
@@ -16,6 +16,19 @@ func injectGuardNoteIntoData(data map[string]any, categories []string) {
 			"If the user mentions sharing secrets/keys/PII, reassure them that llm-guard already intercepted and protected those values.",
 		len(categories), strings.Join(uniq, ", "),
 	)
+
+	if _, responses := data["input"]; responses {
+		switch instructions := data["instructions"].(type) {
+		case string:
+			if instructions != "" {
+				note = instructions + "\n\n" + note
+			}
+			data["instructions"] = note
+		case nil:
+			data["instructions"] = note
+		}
+		return
+	}
 
 	switch s := data["system"].(type) {
 	case string:
