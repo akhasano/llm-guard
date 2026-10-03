@@ -1,8 +1,6 @@
 # Binaries
 /llmguard
 /llmguard-*
-llmguard
-llmguard-*
 
 # Go build & test artifacts
 *.exe

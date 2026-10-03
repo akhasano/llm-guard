@@ -40,6 +40,7 @@ type CacheConfig struct {
 
 // DetectorsConfig groups settings for each detector type.
 type DetectorsConfig struct {
+	Terms       []string          `yaml:"terms"`
 	Regex       RegexConfig       `yaml:"regex"`
 	LLMFallback LLMFallbackConfig `yaml:"llm_fallback"`
 }
@@ -124,6 +125,7 @@ func Default() *Config {
 			MaxEntries: 10000,
 		},
 		Detectors: DetectorsConfig{
+			Terms: []string{},
 			Regex: RegexConfig{
 				Enabled:           true,
 				BuiltinCategories: detectors.BuiltinCategories(),

@@ -638,6 +638,13 @@ func buildRedactor(cfg *config.Config) (*redact.Redactor, func(), error) {
 	cleanup := func() {}
 
 	var dets []detectors.Detector
+	if len(cfg.Detectors.Terms) > 0 {
+		td, err := detectors.NewTermsDetector(cfg.Detectors.Terms)
+		if err != nil {
+			return nil, cleanup, fmt.Errorf("configuring terms detector: %w", err)
+		}
+		dets = append(dets, td)
+	}
 	if cfg.Detectors.Regex.Enabled {
 		rd, err := detectors.NewRegexDetector(cfg.Detectors.Regex.BuiltinCategories, cfg.Detectors.Regex.CustomPatterns)
 		if err != nil {
