@@ -76,6 +76,9 @@ func TestDefault(t *testing.T) {
 	if len(cfg.Detectors.Regex.CustomPatterns) != 0 {
 		t.Errorf("CustomPatterns = %+v, want empty", cfg.Detectors.Regex.CustomPatterns)
 	}
+	if len(cfg.Detectors.Terms) != 0 {
+		t.Errorf("Terms = %v, want empty", cfg.Detectors.Terms)
+	}
 
 	llm := cfg.Detectors.LLMFallback
 	if llm.Enabled {
@@ -136,6 +139,7 @@ func TestSaveLoadRoundTrip(t *testing.T) {
 	original := Default()
 	original.Upstream = "https://api.example.com"
 	original.UpstreamProxy = "socks5://user:password@127.0.0.1:1080"
+	original.Detectors.Terms = []string{"ООО Ромашка", "Project Aurora", "a.b+[x]"}
 	original.Detectors.Regex.BuiltinCategories = []string{"email", "jwt"}
 	original.Detectors.Regex.CustomPatterns = []detectors.CustomPattern{
 		{Name: "internal_proj", Pattern: `PROJ-[0-9]{4,6}`},

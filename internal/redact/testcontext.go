@@ -9,7 +9,7 @@ import (
 // testDataDisclaimerRe matches phrasing that explicitly marks content as
 // synthetic, example, or non-production data. When present in a string field,
 // secret-style regex matches are dropped so labeled test fixtures can reach
-// the upstream model; structured PII categories are always redacted.
+// the upstream model; structured PII and explicit terms are always redacted.
 var testDataDisclaimerRe = regexp.MustCompile(`(?i)\b(` +
 	`test\s+data|not\s+real|fake\s+data|example\s+data|synthetic\s+data|dummy\s+data|` +
 	`placeholder\s+data|for\s+testing\s+only|demo\s+data|sample\s+data|not\s+actual|` +
@@ -20,12 +20,13 @@ var testDataDisclaimerRe = regexp.MustCompile(`(?i)\b(` +
 // alwaysRedactCategories are redacted even when the surrounding text is
 // explicitly labeled as test or example data.
 var alwaysRedactCategories = map[string]bool{
-	"ssn":          true,
-	"credit_card":  true,
-	"phone_us":     true,
-	"phone_intl":   true,
-	"iban":         true,
-	"email":        true,
+	"custom_term": true,
+	"ssn":         true,
+	"credit_card": true,
+	"phone_us":    true,
+	"phone_intl":  true,
+	"iban":        true,
+	"email":       true,
 }
 
 func isTestDataContext(text string) bool {

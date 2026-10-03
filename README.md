@@ -207,6 +207,34 @@ an error, never falls back to a direct connection. Redaction, response
 restoration, and SSE streaming remain unchanged. This option does not affect
 the local LLM detector or model downloads.
 
+## Custom terms (no regex required)
+
+Add literal words, phrases, or known addresses to the existing `detectors`
+section in `~/.config/llmguard/config.yaml`:
+
+```yaml
+detectors:
+  terms:
+    - 'ООО Ромашка'
+    - 'Project Aurora'
+    - 'ул. Лесная, д. 10, кв. 5'
+```
+
+Run `llmguard restart` after editing. Terms are matched as literal substrings,
+case-insensitively (including Cyrillic), and logged as `custom_term`. Regex
+characters such as `.` or `+` need no escaping. Matching preserves the original
+text for response restoration. Terms remain protected even when the text says
+it is test/example data, and work with both other detectors disabled.
+
+Spaces and punctuation must match exactly; there is no word-boundary check,
+declension handling, or automatic address recognition. Avoid very short terms
+that could match unrelated text. Empty or whitespace-only entries are rejected.
+Keep this config private if the terms contain sensitive information.
+
+For pattern-based matching, the existing `detectors.regex.custom_patterns`
+setting is still available; unlike terms, custom regex categories can be
+exempted by a test-data disclaimer.
+
 ## Optional: local LLM fallback detector
 
 Regex catches structured secrets (keys, tokens, emails, SSNs, credit
